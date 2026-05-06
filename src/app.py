@@ -12,13 +12,13 @@ st.markdown("This prototype demonstrates our machine learning pipeline predictin
 
 # Setup paths
 BASE_DIR = Path(__file__).parent.parent
-FINAL_OUTPUTS = BASE_DIR / "outputs" / "finalOutputs"
+OUTPUTS_DIR = BASE_DIR / "outputs"
 
 @st.cache_data
 def load_data():
     # Load Test and Unseen sets
-    test_df = pd.read_csv(FINAL_OUTPUTS / "food_price_predictions_v4.csv", parse_dates=["date"])
-    unseen_df = pd.read_csv(FINAL_OUTPUTS / "food_price_predictions_unseen_v4.csv", parse_dates=["date"])
+    test_df = pd.read_csv(OUTPUTS_DIR / "food_price_predictions_v4.csv", parse_dates=["date"])
+    unseen_df = pd.read_csv(OUTPUTS_DIR / "food_price_predictions_unseen_v4.csv", parse_dates=["date"])
     
     test_df["Dataset"] = "Test Set (Known)"
     unseen_df["Dataset"] = "Unseen Set (Future)"
@@ -30,7 +30,7 @@ def load_data():
 try:
     df = load_data()
 except FileNotFoundError:
-    st.error("Output files not found. Please ensure you have run 03_model.py so the CSV files are in outputs/finalOutputs/")
+    st.error("Output files not found. Please ensure you have run 03_model.py so the CSV files are in outputs/")
     st.stop()
 
 # ── SIDEBAR CONTROLS ──

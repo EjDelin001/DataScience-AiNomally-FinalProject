@@ -23,8 +23,7 @@ Our methodology strictly avoids data leakage and ensures robust, real-world reli
 │   ├── raw/                 ← Original downloaded datasets (WFP & ONI)
 │   ├── interim/             ← Intermediate merged data
 │   └── processed/           ← Final clean panel ready for XGBoost
-├── outputs/
-│   └── finalOutputs/        ← High-res dashboards, evaluation CSVs, and metrics
+├── outputs/                 ← High-res dashboards, evaluation CSVs, and metrics
 ├── src/
 │   ├── 01_pipeline.py
 │   ├── 02_clean.py
@@ -41,7 +40,7 @@ Instead of generating single point predictions, our system produces mathematical
 **Performance on the untouched Future Unseen Set (Sept 2025 – March 2026):**
 - **Overall Coverage:** > 90% (Empirically calibrated to hit strict statistical guarantees)
 - **Mean Absolute Error (MAE):** Low deviance across Fish, Meat, Rice, and Vegetables despite major seasonal volatility.
-- *(Detailed visual diagnostics and regional breakdowns are available in the `outputs/finalOutputs/` directory).*
+- *(Detailed visual diagnostics and regional breakdowns are available in the `outputs/` directory).*
 
 ## 💻 How to Run the Prototype
 
@@ -64,7 +63,7 @@ python -m streamlit run src/app.py
 - **Visualizations:** `matplotlib`
 
 ## ☁️ Running in Google Colab (Foolproof Guide)
-Because this project uses a strict local folder structure (`data/processed`, `outputs/finalOutputs`), you must make a few tiny tweaks to run it in the flat `/content/` folder of Google Colab. 
+Because this project uses a strict local folder structure (`data/processed`, `outputs`), you must make a few tiny tweaks to run it in the flat `/content/` folder of Google Colab. 
 
 Here is exactly what to do:
 
@@ -87,15 +86,15 @@ Delete these 5 lines:
 ```python
 from pathlib import Path
 BASE_DIR = Path(__file__).parent.parent
-FINAL_OUTPUTS = BASE_DIR / "outputs" / "finalOutputs"
-FINAL_OUTPUTS.mkdir(exist_ok=True, parents=True)
+OUTPUTS_DIR = BASE_DIR / "outputs"
+OUTPUTS_DIR.mkdir(exist_ok=True, parents=True)
 df = pd.read_csv(BASE_DIR / "data" / "processed" / "panel_food_prices_ph_clean.csv", parse_dates=["date"])
 ```
 Replace them with these 4 lines:
 ```python
 import os
-os.makedirs("finalOutputs", exist_ok=True)
-FINAL_OUTPUTS = "finalOutputs"
+os.makedirs("outputs", exist_ok=True)
+OUTPUTS_DIR = "outputs"
 df = pd.read_csv("panel_food_prices_ph_clean.csv", parse_dates=["date"])
 ```
 
@@ -118,4 +117,4 @@ STUDIES_CACHE = "group_studies_v4.pkl"
 ```python
 !python 03_model.py
 ```
-All your dashboards and CSVs will pop up in a new `finalOutputs` folder in the sidebar!
+All your dashboards and CSVs will pop up in a new `outputs` folder in the sidebar!

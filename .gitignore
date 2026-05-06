@@ -9,6 +9,3 @@ data/processed/
 
 # Model cache files are large
 *.pkl
-
-# Regenerated every run
-outputs/*.png
