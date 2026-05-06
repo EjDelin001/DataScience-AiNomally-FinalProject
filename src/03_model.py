@@ -1,42 +1,15 @@
 """
-Philippine Food Price Forecasting — Pipeline v4 (bAGo)
-================================================================
-Expects: panel_food_prices_ph_clean.csv  (output of clean.py)
+03_model.py
+-----------
+Trains independent XGBoost regressors per commodity group and applies Mapie
+Split Conformal Prediction to generate robust uncertainty intervals.
 
-v4 changes vs v3
-  ┌──────────────────────────────────────────────────────────────┐
-  │  Fix 1  Per-group confidence levels                          │
-  │         Fish 0.95, Vegetables 0.92, Rice 0.90, Meat 0.93   │
-  │         Closes the 87% → ≥90% coverage gap without         │
-  │         widening all PIs uniformly.                          │
-  │                                                              │
-  │  Fix 2  Three new Fish-specific features                     │
-  │         • fishing_ban   (Nov–Mar BFAR closed season:        │
-  │                          months 11,12,1,2,3)                │
-  │         • fish_x_typhoon (Fish × typhoon season)            │
-  │         • fish_coastal   (Fish × coastal region flag)       │
-  │         Targets Fish RMSE ₱18 → ₱12–14.                    │
-  │                                                              │
-  │  Fix 3  Luzon supply-corridor features                       │
-  │         • is_luzon_corridor  (Region III / IV-A)            │
-  │         • corridor_x_fish    (corridor × Fish)              │
-  │         Targets Region III/IV-A RMSE ₱18–16 → ₱12–15.     │
-  │                                                              │
-  │  Fix 4  Hard January dummy                                   │
-  │         is_january (month == 1)                              │
-  │         Prevents sinusoidal encoding from spreading the     │
-  │         post-holiday/peak-fish spike across Dec–Feb.        │
-  │                                                              │
-  │  Fix 5  Per-group XGBoost models with per-group Optuna      │
-  │         Fish and Rice have a 40× price-range spread;        │
-  │         one shared model forces every split to branch       │
-  │         on cg_enc rather than learning group dynamics.      │
-  │                                                              │
-  │  Split Update  Three-way chronological split                 │
-  │         90% known data → 80% train / 20% test              │
-  │         10% unseen data → final honest benchmark            │
-  │         Prevents test-set leakage from repeated evaluation  │
-  └──────────────────────────────────────────────────────────────┘
+Architecture:
+1. Feature Engineering: Lags, rolling windows, and specific temporal/regional flags.
+2. Chronological Split: Train (80%), Test (20%), and Future Unseen (Holdout).
+3. Optuna Hyperparameter Optimization: 100 trials per independent commodity group.
+4. Conformal Calibration: Per-group MAPIE calibration targeting strict >=90% coverage.
+5. Evaluation: Generates RMSE, MAE, coverage metrics, and visual dashboard artifacts.
 """
 
 import warnings

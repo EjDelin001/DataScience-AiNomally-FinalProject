@@ -1,3 +1,18 @@
+"""
+01_pipeline.py
+--------------
+Data engineering pipeline that merges World Food Programme (WFP) historical 
+price data with NOAA's Oceanic Niño Index (ONI).
+
+Architecture:
+1. Loads raw ONI climate index data.
+2. Loads raw WFP Philippine retail food price data.
+3. Standardizes dates and restructures the ONI dataset from wide to long format.
+4. Performs a left merge to map corresponding ENSO phases to regional prices.
+5. Aggregates data to the regional level to reduce localized market noise.
+6. Outputs intermediate dataset: `panel_wfp_oni.csv`.
+"""
+
 import pandas as pd
 from io import StringIO
 from pathlib import Path

@@ -1,32 +1,13 @@
 """
-clean.py
---------
-Cleans panel_wfp_oni.csv and produces panel_food_prices_ph_clean.csv.
+02_clean.py
+-----------
+Cleans intermediate datasets and produces the final analysis-ready panel.
 
-Steps
------
-1.  Map WFP `category` → `commodity_group` (Rice / Meat / Fish / Vegetables).
-    - cereals and tubers    → Rice   (rice commodities only; maize & semolina dropped)
-    - meat, fish and eggs   → Meat or Fish (split by commodity keyword)
-    - vegetables and fruits → Vegetables
-    - pulses and nuts       → dropped (too sparse)
-    - oil and fats          → dropped (too sparse)
-    - miscellaneous food    → dropped (incoherent catch-all)
-
-2.  Drop specific bad / near-duplicate commodities.
-
-3.  Drop region-commodity series whose WINDOWED completeness < 50 %.
-    Completeness is measured from 2010-01-01 onwards (not from each series'
-    own first date). This prevents the filter from unfairly penalising older
-    commodities whose early-year data was sparse but whose recent data is fine.
-    Threshold is relaxed from 60% → 50% for the same reason.
-
-    Result: pre-2020 commodities with long histories (Rice (regular, milled)
-    from 2000, Meat (pork) from 2000, Cabbage/Carrots from 2008, etc.) are
-    now retained, giving the model 20+ years of training data and full
-    coverage of major ENSO events (2010-11 La Niña, 2015-16 El Niño, etc.).
-
-4.  Save output.
+Architecture:
+1. Categorizes commodities into primary groups (Rice, Meat, Fish, Vegetables).
+2. Drops statistically sparse time-series using a 50% windowed completeness threshold from 2010.
+3. Filters redundant, misclassified, or noisy commodity identifiers.
+4. Outputs final `panel_food_prices_ph_clean.csv`.
 """
 
 import pandas as pd
