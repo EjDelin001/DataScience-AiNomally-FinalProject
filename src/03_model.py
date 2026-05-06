@@ -106,10 +106,6 @@ BASE_DIR = Path(__file__).parent.parent
 df = pd.read_csv(BASE_DIR / "outputs" / "panel_food_prices_ph_clean.csv", parse_dates=["date"])
 df = df.sort_values(["region", "commodity_group", "commodity", "date"]).reset_index(drop=True)
 
-# Drop Eggs (duck): misclassified as Meat in PSA source; ₱10 scale
-# contaminates Meat's absolute-residual calibration (1.5% of rows).
-df = df[df["commodity"] != "Eggs (duck)"].reset_index(drop=True)
-
 print(f"Loaded {len(df):,} rows | {df['date'].min().date()} → {df['date'].max().date()}")
 print(f"Regions: {df['region'].nunique()} | "
       f"Commodity groups: {df['commodity_group'].nunique()} | "

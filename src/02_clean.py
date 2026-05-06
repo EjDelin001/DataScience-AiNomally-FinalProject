@@ -93,6 +93,7 @@ DROP_COMMODITIES = {
     "Tomatoes",                 # only 2/17 regions pass completeness
     # Misclassified
     "Mangoes (carabao)",        # misclassified into meat, fish and eggs
+    "Eggs (duck)",              # misclassified as Meat, contaminates Meat calibration
 }
 
 before = len(df)
