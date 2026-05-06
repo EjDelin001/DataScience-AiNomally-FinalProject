@@ -35,8 +35,10 @@ from pathlib import Path
 
 # ── paths ──────────────────────────────────────────────────────────────────
 BASE_DIR = Path(__file__).parent.parent
-INPUT  = BASE_DIR / "outputs" / "panel_wfp_oni.csv"
-OUTPUT = BASE_DIR / "outputs" / "panel_food_prices_ph_clean.csv"
+INPUT  = BASE_DIR / "data" / "interim" / "panel_wfp_oni.csv"
+OUTPUT_DIR = BASE_DIR / "data" / "processed"
+OUTPUT_DIR.mkdir(exist_ok=True, parents=True)
+OUTPUT = OUTPUT_DIR / "panel_food_prices_ph_clean.csv"
 
 # ── 1. load ─────────────────────────────────────────────────────────────────
 df = pd.read_csv(INPUT, parse_dates=["date"])

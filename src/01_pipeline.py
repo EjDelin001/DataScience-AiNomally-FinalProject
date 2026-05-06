@@ -5,6 +5,8 @@ from pathlib import Path
 # ── Path setup ──────────────────────────────────────────────────────────────
 BASE_DIR = Path(__file__).parent.parent  # goes up from src/ to project root
 DATA_RAW = BASE_DIR / "data" / "raw"
+DATA_INTERIM = BASE_DIR / "data" / "interim"
+DATA_INTERIM.mkdir(exist_ok=True, parents=True)
 OUTPUTS  = BASE_DIR / "outputs"
 OUTPUTS.mkdir(exist_ok=True)            # create outputs/ if it doesn't exist
 
@@ -99,7 +101,7 @@ oni_text = """Year,DJF,JFM,FMA,MAM,AMJ,MJJ,JJA,JAS,ASO,SON,OND,NDJ
 2025,-0.4,-0.2,-0.1,0.0,0.0,0.0,-0.1,-0.3,-0.4,-0.5,-0.6,-0.5"""
 
 oni_raw = pd.read_csv(StringIO(oni_text))
-oni_raw.to_csv(OUTPUTS / "oni_raw.csv", index=False)
+oni_raw.to_csv(DATA_RAW / "oni_raw.csv", index=False)
 print("ONI raw saved. Shape:", oni_raw.shape)
 
 
@@ -115,7 +117,7 @@ print("WFP shape:", wfp.shape)
 print("WFP columns:", wfp.columns.tolist())
 print("WFP price types:", wfp["pricetype"].unique())
 
-oni_raw = pd.read_csv(OUTPUTS / "oni_raw.csv")
+oni_raw = pd.read_csv(DATA_RAW / "oni_raw.csv")
 print("\nONI shape:", oni_raw.shape)
 print("ONI columns:", oni_raw.columns.tolist())
 
@@ -241,5 +243,5 @@ print("Nulls:\n", panel.isnull().sum())
 print("\nSample:")
 print(panel.head())
 
-panel.to_csv(OUTPUTS / "panel_wfp_oni.csv", index=False)
-print("\nSaved as outputs/panel_wfp_oni.csv")
+panel.to_csv(DATA_INTERIM / "panel_wfp_oni.csv", index=False)
+print("\nSaved as data/interim/panel_wfp_oni.csv")

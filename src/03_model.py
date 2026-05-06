@@ -104,8 +104,8 @@ CORRIDOR_REGIONS = {"Region III", "Region IV-A"}
 from pathlib import Path
 BASE_DIR = Path(__file__).parent.parent
 FINAL_OUTPUTS = BASE_DIR / "outputs" / "finalOutputs"
-FINAL_OUTPUTS.mkdir(exist_ok=True)
-df = pd.read_csv(BASE_DIR / "outputs" / "panel_food_prices_ph_clean.csv", parse_dates=["date"])
+FINAL_OUTPUTS.mkdir(exist_ok=True, parents=True)
+df = pd.read_csv(BASE_DIR / "data" / "processed" / "panel_food_prices_ph_clean.csv", parse_dates=["date"])
 df = df.sort_values(["region", "commodity_group", "commodity", "date"]).reset_index(drop=True)
 
 print(f"Loaded {len(df):,} rows | {df['date'].min().date()} → {df['date'].max().date()}")
