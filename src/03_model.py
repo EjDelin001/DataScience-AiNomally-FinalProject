@@ -387,7 +387,7 @@ for grp_name in KEEP_GROUPS:
                     "reg_alpha":        trial.suggest_float("reg_alpha", 1e-4, 5.0, log=True),
                     "reg_lambda":       trial.suggest_float("reg_lambda", 0.5, 5.0),
                 }
-                model = XGBRegressor(random_state=42, tree_method="hist", **params)
+                model = XGBRegressor(random_state=42, tree_method="hist", device="cuda", **params)
                 scores = cross_val_score(
                     model, X, y,
                     cv=tscv, scoring="neg_root_mean_squared_error"
@@ -405,7 +405,7 @@ for grp_name in KEEP_GROUPS:
         print(f"  Best CV RMSE (log scale): {study_g.best_value:.5f}")
         print(f"  Best params: {study_g.best_params}")
 
-        model_g = XGBRegressor(random_state=42, tree_method="hist", **study_g.best_params)
+        model_g = XGBRegressor(random_state=42, tree_method="hist", device="cuda", **study_g.best_params)
         model_g.fit(X_tr_gg, y_tr_gg)
         GROUP_MODELS[grp_name] = model_g
     else:
