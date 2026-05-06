@@ -339,8 +339,8 @@ unseen_groups_df = unseen_df.reset_index(drop=True)
 print("\n── Phase 3: Per-Group Optuna + XGBoost + Conformal (100 trials each) ──")
 
 SKIP_OPTUNA   = True
-MODELS_CACHE  = FINAL_OUTPUTS / "group_models_v4.pkl"
-STUDIES_CACHE = FINAL_OUTPUTS / "group_studies_v4.pkl"
+MODELS_CACHE  = BASE_DIR / "data" / "group_models_v4.pkl"
+STUDIES_CACHE = BASE_DIR / "data" / "group_studies_v4.pkl"
 
 import pickle, os
 
