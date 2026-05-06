@@ -1,0 +1,5 @@
+commodity_group,RMSE,MAE,Coverage,PI_width,n
+Fish,11.44,6.27,95.71,34.23,816.0
+Meat,12.22,6.79,90.81,26.17,457.0
+Rice,1.84,1.38,96.63,7.55,267.0
+Vegetables,5.76,2.33,90.7,7.17,1677.0
