@@ -101,7 +101,9 @@ CORRIDOR_REGIONS = {"Region III", "Region IV-A"}
 # ══════════════════════════════════════════════════════════════
 # LOAD DATA
 # ══════════════════════════════════════════════════════════════
-df = pd.read_csv("panel_food_prices_ph_clean.csv", parse_dates=["date"])
+from pathlib import Path
+BASE_DIR = Path(__file__).parent.parent
+df = pd.read_csv(BASE_DIR / "outputs" / "panel_food_prices_ph_clean.csv", parse_dates=["date"])
 df = df.sort_values(["region", "commodity_group", "commodity", "date"]).reset_index(drop=True)
 
 # Drop Eggs (duck): misclassified as Meat in PSA source; ₱10 scale

@@ -34,8 +34,9 @@ import numpy as np
 from pathlib import Path
 
 # ── paths ──────────────────────────────────────────────────────────────────
-INPUT  = Path("panel_wfp_oni.csv")
-OUTPUT = Path("panel_food_prices_ph_clean.csv")
+BASE_DIR = Path(__file__).parent.parent
+INPUT  = BASE_DIR / "outputs" / "panel_wfp_oni.csv"
+OUTPUT = BASE_DIR / "outputs" / "panel_food_prices_ph_clean.csv"
 
 # ── 1. load ─────────────────────────────────────────────────────────────────
 df = pd.read_csv(INPUT, parse_dates=["date"])

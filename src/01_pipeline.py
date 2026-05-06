@@ -1,10 +1,16 @@
 import pandas as pd
 from io import StringIO
+from pathlib import Path
+
+# ── Path setup ──────────────────────────────────────────────────────────────
+BASE_DIR = Path(__file__).parent.parent  # goes up from src/ to project root
+DATA_RAW = BASE_DIR / "data" / "raw"
+OUTPUTS  = BASE_DIR / "outputs"
+OUTPUTS.mkdir(exist_ok=True)            # create outputs/ if it doesn't exist
 
 # ══════════════════════════════════════════════════════════════
 # STEP 1 — WFP is already downloaded manually
-# Make sure wfp_food_prices_phl.csv is in the same folder
-# as this script before running
+# Make sure wfp_food_prices_phl.csv is inside data/raw/
 # ══════════════════════════════════════════════════════════════
 
 # ══════════════════════════════════════════════════════════════
@@ -93,7 +99,7 @@ oni_text = """Year,DJF,JFM,FMA,MAM,AMJ,MJJ,JJA,JAS,ASO,SON,OND,NDJ
 2025,-0.4,-0.2,-0.1,0.0,0.0,0.0,-0.1,-0.3,-0.4,-0.5,-0.6,-0.5"""
 
 oni_raw = pd.read_csv(StringIO(oni_text))
-oni_raw.to_csv("oni_raw.csv", index=False)
+oni_raw.to_csv(OUTPUTS / "oni_raw.csv", index=False)
 print("ONI raw saved. Shape:", oni_raw.shape)
 
 
@@ -104,12 +110,12 @@ print("\n" + "=" * 50)
 print("STEP 3: Load & Inspect")
 print("=" * 50)
 
-wfp = pd.read_csv("wfp_food_prices_phl.csv")
+wfp = pd.read_csv(DATA_RAW / "wfp_food_prices_phl.csv")
 print("WFP shape:", wfp.shape)
 print("WFP columns:", wfp.columns.tolist())
 print("WFP price types:", wfp["pricetype"].unique())
 
-oni_raw = pd.read_csv("oni_raw.csv")
+oni_raw = pd.read_csv(OUTPUTS / "oni_raw.csv")
 print("\nONI shape:", oni_raw.shape)
 print("ONI columns:", oni_raw.columns.tolist())
 
@@ -235,5 +241,5 @@ print("Nulls:\n", panel.isnull().sum())
 print("\nSample:")
 print(panel.head())
 
-panel.to_csv("panel_wfp_oni.csv", index=False)
-print("\nSaved as panel_wfp_oni.csv")
+panel.to_csv(OUTPUTS / "panel_wfp_oni.csv", index=False)
+print("\nSaved as outputs/panel_wfp_oni.csv")
