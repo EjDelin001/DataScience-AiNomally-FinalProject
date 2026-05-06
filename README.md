@@ -62,3 +62,60 @@ python -m streamlit run src/app.py
 - **Uncertainty Quantification:** `mapie` (Conformal Prediction)
 - **Web App / UI:** `streamlit`, `plotly`
 - **Visualizations:** `matplotlib`
+
+## ☁️ Running in Google Colab (Foolproof Guide)
+Because this project uses a strict local folder structure (`data/processed`, `outputs/finalOutputs`), you must make a few tiny tweaks to run it in the flat `/content/` folder of Google Colab. 
+
+Here is exactly what to do:
+
+### Step 1: Upload your files
+1. Go to [Google Colab](https://colab.research.google.com/) and create a New Notebook.
+2. Click the **Folder icon** on the left sidebar.
+3. Drag and drop **both** `03_model.py` and `panel_food_prices_ph_clean.csv` directly into that sidebar.
+
+### Step 2: Install required libraries
+Create a new code cell at the top of your notebook and run this exact command to install the missing libraries:
+```python
+!pip install optuna mapie xgboost
+```
+
+### Step 3: Change the Paths in `03_model.py`
+Double-click `03_model.py` in the Colab sidebar to open it in the editor.
+
+**A. Find the "LOAD DATA" section (around line 77):**
+Delete these 5 lines:
+```python
+from pathlib import Path
+BASE_DIR = Path(__file__).parent.parent
+FINAL_OUTPUTS = BASE_DIR / "outputs" / "finalOutputs"
+FINAL_OUTPUTS.mkdir(exist_ok=True, parents=True)
+df = pd.read_csv(BASE_DIR / "data" / "processed" / "panel_food_prices_ph_clean.csv", parse_dates=["date"])
+```
+Replace them with these 4 lines:
+```python
+import os
+os.makedirs("finalOutputs", exist_ok=True)
+FINAL_OUTPUTS = "finalOutputs"
+df = pd.read_csv("panel_food_prices_ph_clean.csv", parse_dates=["date"])
+```
+
+**B. Find the "CACHE" section (around line 315):**
+Delete these 2 lines:
+```python
+MODELS_CACHE  = BASE_DIR / "data" / "group_models_v4.pkl"
+STUDIES_CACHE = BASE_DIR / "data" / "group_studies_v4.pkl"
+```
+Replace them with these 2 lines:
+```python
+MODELS_CACHE  = "group_models_v4.pkl"
+STUDIES_CACHE = "group_studies_v4.pkl"
+```
+
+### Step 4: Turn on the GPU and Run!
+1. In the top menu, click **Runtime** > **Change runtime type**.
+2. Select **T4 GPU** and click Save.
+3. Create a new code cell and run:
+```python
+!python 03_model.py
+```
+All your dashboards and CSVs will pop up in a new `finalOutputs` folder in the sidebar!
