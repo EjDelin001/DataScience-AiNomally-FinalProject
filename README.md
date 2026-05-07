@@ -39,10 +39,42 @@ Our methodology strictly avoids data leakage and ensures robust, real-world reli
 
 Instead of generating single point predictions, our system produces mathematically sound **Prediction Intervals**. The model is evaluated on a strict **Chronological 3-Way Split** (Train / Test / Unseen) to simulate real-world deployment.
 
-**Performance on the untouched Future Unseen Set (Sept 2025 – March 2026):**
-- **Overall Coverage:** > 90% (Empirically calibrated to hit strict statistical guarantees)
-- **Mean Absolute Error (MAE):** Low deviance across Fish, Meat, Rice, and Vegetables despite major seasonal volatility.
-- *(Detailed visual diagnostics and regional breakdowns are available in the `outputs/` directory).*
+### Data Split
+| Set | Rows | Date Range |
+|---|---|---|
+| Train | 21,113 | Jun 2001 → Aug 2024 |
+| Test | 5,446 | Sep 2024 → Aug 2025 |
+| Unseen (holdout) | 3,217 | Sep 2025 → Mar 2026 |
+
+### Test Set Performance (Sep 2024 – Aug 2025)
+| Metric | Overall | Vegetables | Fish | Meat | Rice |
+|---|---|---|---|---|---|
+| RMSE (₱) | 7.43 | 4.10 | 11.82 | 8.57 | 2.38 |
+| MAE (₱) | 3.08 | 1.52 | 5.44 | 5.25 | 1.75 |
+| Coverage | 90.9% | 90.7% | 91.0% | 91.1% | 92.3% |
+| PI Width (₱) | 11.88 | 5.06 | 21.64 | 20.92 | 8.70 |
+
+> Coverage target ≥ 90%. All four groups meet the target on the test set. ✅
+
+### Unseen Holdout Performance (Sep 2025 – Mar 2026)
+| Metric | Overall |
+|---|---|
+| RMSE (₱) | 7.94 |
+| MAE (₱) | 3.58 |
+| Coverage | 88.4% |
+| PI Width (₱) | 12.27 |
+
+> The 88.4% unseen coverage reflects genuine temporal distribution shift — the unseen set was never consulted during calibration, making this an honest out-of-sample benchmark.
+
+### Auto-Calibrated Confidence Levels (no test leakage)
+| Group | α | Cal-holdout coverage |
+|---|---|---|
+| Vegetables | 0.91 | 90.7% |
+| Fish | 0.91 | 90.3% |
+| Meat | 0.92 | 92.4% |
+| Rice | 0.95 | 91.1% |
+
+*(Detailed visual diagnostics and regional breakdowns are in the `outputs/` directory.)*
 
 ## 💻 How to Run the Prototype
 
