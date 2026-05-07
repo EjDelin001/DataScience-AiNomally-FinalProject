@@ -41,18 +41,45 @@ except ImportError:
 
 KEEP_GROUPS = ["Vegetables", "Fish", "Meat", "Rice"]
 
-# Fix 1: per-group confidence levels
-# NOTE: These levels were calibrated empirically to achieve ≥90% coverage
-# per group on the observed calibration sets. Because time-series data
-# violates the exchangeability assumption required for formal conformal
-# guarantees, the reported coverage figures should be interpreted as
-# empirically observed coverage rather than theoretically guaranteed coverage.
-GROUP_CONFIDENCE = {
-    "Fish":       0.90,
-    "Rice":       0.90,
-    "Vegetables": 0.91,  # Set based on Phase 5 Test Set recalibration
-    "Meat":       0.90,
-}
+# Per-group confidence levels are determined automatically by find_min_alpha().
+# That function splits the calibration set 80/20 chronologically, computes
+# nonconformity scores on the first 80% (cal-fit), and sweeps α from 0.90
+# upward until the last 20% (cal-holdout) achieves ≥90% empirical coverage.
+# The test set is never touched during this process — no leakage.
+GROUP_CONFIDENCE = {}  # populated automatically in Phase 3
+
+def find_min_alpha(model, X_cal, y_cal, target_cov=0.90, alpha_min=0.90, alpha_max=0.99, step=0.01):
+    """
+    Find the minimum conformal confidence level α that achieves ≥target_cov
+    on a chronological internal holdout of the calibration set.
+
+    Method:
+      1. Split X_cal/y_cal 80/20 chronologically (cal-fit / cal-holdout).
+      2. Compute nonconformity scores = |y - ŷ| on cal-fit.
+      3. For each α, compute the (ceil((n+1)α)/n)-quantile of scores as
+         the conformal threshold (standard finite-sample correction).
+      4. Return the minimum α where cal-holdout coverage ≥ target_cov.
+
+    Only training-time data is used — the test set is never consulted.
+    """
+    cal_split  = int(len(X_cal) * 0.80)
+    X_cf, X_ch = X_cal[:cal_split], X_cal[cal_split:]
+    y_cf, y_ch = y_cal[:cal_split], y_cal[cal_split:]
+
+    y_hat_cf = model.predict(X_cf)
+    scores   = np.abs(y_cf - y_hat_cf)          # nonconformity scores (log scale)
+    y_hat_ch = model.predict(X_ch)
+    abs_err_ch = np.abs(y_ch - y_hat_ch)
+
+    n = len(scores)
+    candidates = np.round(np.arange(alpha_min, alpha_max + step / 2, step), 2)
+    for alpha in candidates:
+        q_level   = min(np.ceil((n + 1) * alpha) / n, 1.0)
+        threshold = np.quantile(scores, q_level)
+        coverage  = float(np.mean(abs_err_ch <= threshold))
+        if coverage >= target_cov:
+            return alpha, coverage
+    return alpha_max, float(np.mean(abs_err_ch <= np.quantile(scores, 1.0)))
 
 CONFORMAL_GROUPS = {
     "Fish":       lambda r: (r["commodity_group"] == "Fish"),
@@ -131,12 +158,7 @@ df["year"] = df["date"].dt.year
 # 1i. Supply-side seasonal dummies
 df["typhoon_season"]   = df["month"].isin([6, 7, 8, 9, 10, 11]).astype(float)
 
-# fish_supply_peak: amihan window (Nov–Mar) when fishing conditions are best,
-# supply is highest, and fish prices are at their LOWEST.
-# Renamed from fish_peak_season to avoid implying peak prices.
-df["fish_supply_peak"] = df["month"].isin([11, 12, 1, 2, 3]).astype(float)
-
-# ── Fix 2: fishing ban ──────────────────────────────────────────
+# ── Fix 2: fishing ban (amihan window) ──────────────────────────
 # BFAR closed fishing seasons by area (official schedule):
 #   Northeast Palawan : November – January
 #   Visayan Sea       : November 15 – February 15
@@ -148,18 +170,10 @@ df["fish_supply_peak"] = df["month"].isin([11, 12, 1, 2, 3]).astype(float)
 # Encoding months 11, 12, 1, 2, 3 covers the full multi-region window.
 df["fishing_ban"] = df["month"].isin([11, 12, 1, 2, 3]).astype(float)
 
-df["fish_x_typhoon"] = (
-    (df["commodity_group"] == "Fish").astype(float) * df["typhoon_season"]
-)
-
 df["is_coastal"]   = df["region"].isin(COASTAL_REGIONS).astype(float)
-df["fish_coastal"] = (df["commodity_group"] == "Fish").astype(float) * df["is_coastal"]
 
 # ── Fix 3: Luzon supply-corridor flags ──
 df["is_luzon_corridor"] = df["region"].isin(CORRIDOR_REGIONS).astype(float)
-df["corridor_x_fish"]   = (
-    df["is_luzon_corridor"] * (df["commodity_group"] == "Fish").astype(float)
-)
 
 # ── Fix 4: hard January dummy ──
 df["is_january"] = (df["month"] == 1).astype(float)
@@ -171,18 +185,9 @@ df = pd.get_dummies(df, columns=["enso_phase"], drop_first=True, dtype=float)
 le_region = LabelEncoder()
 le_group  = LabelEncoder()
 df["region_enc"] = le_region.fit_transform(df["region"])
-df["cg_enc"]     = le_group.fit_transform(df["commodity_group"])
-
-# 1l. ONI × commodity group interaction
-df["oni_x_cg"]      = df["oni"] * df["cg_enc"]
-df["oni_lag3_x_cg"] = df["oni_lag_3"] * df["cg_enc"]
-
 # 1m. ONI × season interaction
 df["oni_x_month_sin"] = df["oni"] * df["month_sin"]
 df["oni_x_month_cos"] = df["oni"] * df["month_cos"]
-
-# 1n. Region × commodity group interaction
-df["region_x_cg"] = df["region_enc"] * df["cg_enc"]
 
 enso_dummy_cols = [c for c in df.columns if c.startswith("enso_phase_")]
 
@@ -193,20 +198,18 @@ feature_cols = [
     # Climate
     "oni", "oni_lag_3", "oni_lag_6",
     # Climate interactions
-    "oni_x_cg", "oni_lag3_x_cg", "oni_x_month_sin", "oni_x_month_cos",
+    "oni_x_month_sin", "oni_x_month_cos",
     # Seasonality and time
     "month_sin", "month_cos", "year",
-    "typhoon_season", "fish_supply_peak",   # renamed from fish_peak_season
+    "typhoon_season",
     # Fix 2: Fish-specific features (fishing_ban now Nov–Mar)
-    "fishing_ban", "fish_x_typhoon", "is_coastal", "fish_coastal",
+    "fishing_ban", "is_coastal",
     # Fix 3: Luzon corridor features
-    "is_luzon_corridor", "corridor_x_fish",
+    "is_luzon_corridor",
     # Fix 4: January spike
     "is_january",
     # Entity encoding
-    "region_enc", "cg_enc",
-    # Region × group interaction
-    "region_x_cg",
+    "region_enc",
 ] + enso_dummy_cols
 
 df_clean = df.dropna(subset=feature_cols + ["log_price"]).reset_index(drop=True)
@@ -387,14 +390,21 @@ for grp_name in KEEP_GROUPS:
         print(f"  Using cached model (SKIP_OPTUNA=True)")
 
     model_g = GROUP_MODELS[grp_name]
+
+    # ── Calibration-set-only confidence sweep (no test leakage) ──
+    alpha_g, cal_holdout_cov = find_min_alpha(model_g, X_cal_g, y_cal_g)
+    GROUP_CONFIDENCE[grp_name] = alpha_g
+    print(f"  Cal-holdout coverage sweep → α={alpha_g:.2f}  "
+          f"(cal-holdout cov: {cal_holdout_cov:.1%})")
+
     cr_g = SplitConformalRegressor(
         estimator=model_g,
-        confidence_level=GROUP_CONFIDENCE[grp_name],
+        confidence_level=alpha_g,
         prefit=True
     )
     cr_g.conformalize(X_cal_g, y_cal_g)
     conformal_regressors[grp_name] = cr_g
-    print(f"  Conformal confidence level (empirically calibrated): {GROUP_CONFIDENCE[grp_name]}")
+    print(f"  Conformal confidence level (cal-set recalibrated): {alpha_g}")
 
 import pickle
 pickle.dump(GROUP_MODELS,  open(MODELS_CACHE,  "wb"))
