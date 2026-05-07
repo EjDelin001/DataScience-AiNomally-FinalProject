@@ -511,18 +511,6 @@ tertile_err = results.groupby("price_tertile")["abs_err"].mean().round(2)
 print("\n  Mean MAE by price regime:")
 print(tertile_err.to_string())
 
-print("\n  PER COMMODITY GROUP (detail):")
-for grp_name in ["Fish", "Vegetables", "Meat", "Rice"]:
-    sub = results[results["commodity_group"] == grp_name]
-    if len(sub) == 0:
-        continue
-    rmse = np.sqrt(mean_squared_error(sub["actual"], sub["pred"]))
-    cov  = sub["covered"].mean() * 100
-    piw  = (sub["upper"] - sub["lower"]).mean()
-    cv_rmse = group_studies[grp_name].best_value
-    print(f"  {grp_name:12s}  RMSE ₱{rmse:.2f}  "
-          f"Coverage {cov:.1f}%  PI width ₱{piw:.2f}  "
-          f"CV RMSE {cv_rmse:.5f}")
 
 
 # ══════════════════════════════════════════════════════════════
@@ -994,23 +982,7 @@ print("═" * 60)
 print(f"  Regions covered  : {results['region'].nunique()}")
 print(f"  Commodity groups : {results['commodity_group'].nunique()}")
 print(f"  Commodities      : {results['commodity'].nunique()}")
-print(f"\n  Data split:")
-print(f"    Train          : {len(train_df):,} rows  "
-      f"({train_df['date'].min().date()} → {train_df['date'].max().date()})")
-print(f"    Test           : {len(test_df):,} rows   "
-      f"({test_df['date'].min().date()} → {test_df['date'].max().date()})")
-print(f"    Unseen         : {len(unseen_df):,} rows   "
-      f"({unseen_df['date'].min().date()} → {unseen_df['date'].max().date()})")
-print(f"\n  TEST SET:")
-print(f"    RMSE           : ₱{overall_rmse:.2f}")
-print(f"    MAE            : ₱{overall_mae:.2f}")
-print(f"    Coverage       : {covered*100:.1f}%  (target ≥ 90%)")
-print(f"    Mean PI width  : ₱{mean_pi_w:.2f}")
-print(f"\n  UNSEEN SET (true out-of-sample):")
-print(f"    RMSE           : ₱{unseen_rmse:.2f}")
-print(f"    MAE            : ₱{unseen_mae:.2f}")
-print(f"    Coverage       : {unseen_cov*100:.1f}%  (target ≥ 90%)")
-print(f"    Mean PI width  : ₱{unseen_pi_w:.2f}")
+
 print(f"\n  Per-group CV RMSE (log scale):")
 for g in KEEP_GROUPS:
     print(f"    {g:12s}: {group_studies[g].best_value:.5f}")
