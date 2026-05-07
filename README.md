@@ -22,7 +22,9 @@ Our methodology strictly avoids data leakage and ensures robust, real-world reli
 ├── data/
 │   ├── raw/                 ← Original downloaded datasets (WFP & ONI)
 │   ├── interim/             ← Intermediate merged data
-│   └── processed/           ← Final clean panel ready for XGBoost
+│   ├── processed/           ← Final clean panel ready for XGBoost
+│   ├── group_models_v4.pkl  ← Pre-trained model cache (Required for app.py)
+│   └── group_studies_v4.pkl ← Optuna studies cache
 ├── outputs/                 ← High-res dashboards, evaluation CSVs, and metrics
 ├── src/
 │   ├── 01_pipeline.py
@@ -47,10 +49,15 @@ Instead of generating single point predictions, our system produces mathematical
 To launch the interactive system walkthrough for the final presentation:
 
 ```bash
-# 1. Ensure you have the required libraries
+# 1. Setup the Model Files
+# Place the pre-trained models (.pkl files) directly inside the data/ folder:
+# - data/group_models_v4.pkl
+# - data/group_studies_v4.pkl
+
+# 2. Ensure you have the required libraries
 pip install streamlit plotly
 
-# 2. Launch the application
+# 3. Launch the application
 python -m streamlit run src/app.py
 ```
 
