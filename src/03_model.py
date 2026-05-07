@@ -1016,3 +1016,8 @@ for g in KEEP_GROUPS:
     print(f"    {g:12s}: {group_studies[g].best_value:.5f}")
 print("\nAll outputs saved.")
 print("Done ✓")
+
+# Close all matplotlib figures to prevent exit code 1 on Windows
+# (Agg backend leaves figures open during interpreter shutdown)
+plt.close("all")
+import sys; sys.exit(0)
