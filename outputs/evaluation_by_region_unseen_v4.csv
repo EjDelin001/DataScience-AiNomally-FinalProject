@@ -1,18 +1,18 @@
 region,RMSE,MAE,Coverage,n
-Autonomous region in Muslim Mindanao,4.46,2.49,93.01,143.0
-Cordillera Administrative region,4.72,2.92,94.51,182.0
-National Capital region,13.69,6.04,87.78,90.0
-Region I,7.9,4.23,93.44,183.0
-Region II,9.38,4.19,93.26,178.0
-Region III,13.86,6.7,84.4,250.0
-Region IV-A,12.14,5.26,89.62,212.0
-Region IV-B,7.06,4.13,89.55,220.0
-Region IX,6.14,2.96,93.96,182.0
-Region V,9.55,4.91,91.18,204.0
-Region VI,7.07,3.98,92.92,212.0
-Region VII,4.09,2.51,96.41,167.0
-Region VIII,4.54,2.81,94.2,224.0
-Region X,3.41,2.19,93.53,201.0
-Region XI,7.29,3.29,93.58,187.0
-Region XII,4.6,2.37,98.44,192.0
-Region XIII,12.68,4.7,93.68,190.0
+Autonomous region in Muslim Mindanao,4.46,2.49,87.41,143.0
+Cordillera Administrative region,4.72,2.92,90.11,182.0
+National Capital region,13.69,6.04,83.33,90.0
+Region I,7.9,4.23,87.98,183.0
+Region II,9.38,4.19,87.08,178.0
+Region III,13.86,6.7,78.8,250.0
+Region IV-A,12.14,5.26,85.85,212.0
+Region IV-B,7.06,4.13,85.45,220.0
+Region IX,6.14,2.96,91.21,182.0
+Region V,9.55,4.91,88.73,204.0
+Region VI,7.07,3.98,84.91,212.0
+Region VII,4.09,2.51,91.62,167.0
+Region VIII,4.54,2.81,91.52,224.0
+Region X,3.41,2.19,90.55,201.0
+Region XI,7.29,3.29,90.91,187.0
+Region XII,4.6,2.37,94.27,192.0
+Region XIII,12.68,4.7,92.63,190.0

@@ -48,10 +48,10 @@ KEEP_GROUPS = ["Vegetables", "Fish", "Meat", "Rice"]
 # guarantees, the reported coverage figures should be interpreted as
 # empirically observed coverage rather than theoretically guaranteed coverage.
 GROUP_CONFIDENCE = {
-    "Fish":       0.95,
+    "Fish":       0.90,
     "Rice":       0.90,
-    "Vegetables": 0.94,  # Increased from 0.92 to push unseen coverage > 90%
-    "Meat":       0.96,  # Increased from 0.93 to push unseen coverage > 90%
+    "Vegetables": 0.91,  # Set based on Phase 5 Test Set recalibration
+    "Meat":       0.90,
 }
 
 CONFORMAL_GROUPS = {
