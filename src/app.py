@@ -38,7 +38,8 @@ except FileNotFoundError:
 def load_group_confidence():
     """Returns dict mapping commodity_group -> confidence level string, e.g. 'Rice' -> '95%'."""
     cg_path = OUTPUTS_DIR / "evaluation_by_commodity_group_v4.csv"
-    defaults = {"Fish": "90%", "Rice": "95%", "Meat": "91%", "Vegetables": "92%"}
+    defaults = {"Fish": "91%", "Rice": "95%", "Meat": "92%", "Vegetables": "91%"}
+
     if not cg_path.exists():
         return defaults
     cg_df = pd.read_csv(cg_path)
