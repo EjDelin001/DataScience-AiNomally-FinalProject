@@ -33,6 +33,27 @@ except FileNotFoundError:
     st.error("Output files not found. Please ensure you have run 03_model.py so the CSV files are in outputs/")
     st.stop()
 
+# Load per-group confidence levels if available
+@st.cache_data
+def load_group_confidence():
+    """Returns dict mapping commodity_group -> confidence level string, e.g. 'Rice' -> '95%'."""
+    cg_path = OUTPUTS_DIR / "evaluation_by_commodity_group_v4.csv"
+    defaults = {"Fish": "90%", "Rice": "95%", "Meat": "91%", "Vegetables": "92%"}
+    if not cg_path.exists():
+        return defaults
+    cg_df = pd.read_csv(cg_path)
+    # Coverage column is already a percentage (e.g. 95.3); round to nearest whole
+    if "Coverage" in cg_df.columns and "commodity_group" in cg_df.columns:
+        mapping = {
+            row["commodity_group"]: f"{round(row['Coverage'])}%"
+            for _, row in cg_df.iterrows()
+        }
+        return {**defaults, **mapping}
+    return defaults
+
+group_confidence = load_group_confidence()
+
+
 # ── SIDEBAR CONTROLS ──
 st.sidebar.image("https://cdn-icons-png.flaticon.com/512/3050/3050525.png", width=100) # Generic food icon
 st.sidebar.header("Filter Options")
@@ -63,7 +84,7 @@ fig.add_trace(go.Scatter(
     line=dict(color='rgba(255,255,255,0)'),
     hoverinfo="skip",
     showlegend=True,
-    name='90% Conformal Interval'
+    name=f"{group_confidence.get(commodity_group, '≥90%')} Conformal Interval"
 ))
 
 # 2. Actual Prices

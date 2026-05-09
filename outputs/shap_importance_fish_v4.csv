@@ -1,0 +1,27 @@
+feature,shap_mean_abs
+price_lag_12,0.20192109
+price_trend6,0.14242576
+price_yoy,0.095017046
+price_lag_1,0.015956601
+price_lag_6,0.0077740923
+price_lag_2,0.0075602373
+price_lag_3,0.005395199
+price_vol3,0.001688271
+oni_x_month_sin,0.0012881886
+fishing_ban,0.0012271159
+month_sin,0.0010934026
+region_enc,0.0010570587
+oni_lag_6,0.0008719336
+comm_mean,0.00073637516
+comm_std,0.0007199375
+is_january,0.0004764125
+month_cos,0.0004236619
+is_coastal,0.00030620533
+oni_lag_3,0.00026267636
+oni,0.00022228924
+year,0.00020199646
+oni_x_month_cos,0.00019296583
+enso_phase_Neutral,0.00014811574
+is_luzon_corridor,9.773802e-05
+typhoon_season,7.7701945e-05
+enso_phase_La Nina,1.3071724e-05

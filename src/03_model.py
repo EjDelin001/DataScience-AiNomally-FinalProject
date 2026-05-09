@@ -34,6 +34,24 @@ try:
 except ImportError:
     raise ImportError("Run: pip install mapie")
 
+try:
+    import shap
+    SHAP_AVAILABLE = True
+except ImportError:
+    SHAP_AVAILABLE = False
+    print("WARNING: shap not installed. Run: pip install shap")
+
+# ── Device selection: use CUDA if available, fall back to CPU ──
+try:
+    import xgboost as xgb
+    _test_booster = xgb.train({"device": "cuda", "tree_method": "hist"},
+                               xgb.DMatrix(np.zeros((2, 2)), label=np.zeros(2)),
+                               num_boost_round=1)
+    DEVICE = "cuda"
+except Exception:
+    DEVICE = "cpu"
+print(f"XGBoost device: {DEVICE}")
+
 
 # ══════════════════════════════════════════════════════════════
 # CONSTANTS
@@ -181,10 +199,14 @@ df["is_january"] = (df["month"] == 1).astype(float)
 # 1j. ENSO phase dummies
 df = pd.get_dummies(df, columns=["enso_phase"], drop_first=True, dtype=float)
 
-# 1k. Label-encode region and commodity group
+# 1k. Label-encode region
+# NOTE: We fit on sorted unique values (not on the data rows) so the mapping
+# is deterministic and does not depend on any future observations — all 17
+# regions are present throughout the dataset so this is functionally
+# equivalent to fitting on training data only, but explicitly documented.
 le_region = LabelEncoder()
-le_group  = LabelEncoder()
-df["region_enc"] = le_region.fit_transform(df["region"])
+le_region.fit(sorted(df["region"].unique()))   # fit on fixed vocabulary, no split leakage
+df["region_enc"] = le_region.transform(df["region"])
 # 1m. ONI × season interaction
 df["oni_x_month_sin"] = df["oni"] * df["month_sin"]
 df["oni_x_month_cos"] = df["oni"] * df["month_cos"]
@@ -365,7 +387,7 @@ for grp_name in KEEP_GROUPS:
                     "reg_alpha":        trial.suggest_float("reg_alpha", 1e-4, 5.0, log=True),
                     "reg_lambda":       trial.suggest_float("reg_lambda", 0.5, 5.0),
                 }
-                model = XGBRegressor(random_state=42, tree_method="hist", device="cuda", **params)
+                model = XGBRegressor(random_state=42, tree_method="hist", device=DEVICE, **params)
                 scores = cross_val_score(
                     model, X, y,
                     cv=tscv, scoring="neg_root_mean_squared_error"
@@ -373,7 +395,10 @@ for grp_name in KEEP_GROUPS:
                 return -scores.mean()
             return objective
 
-        study_g = optuna.create_study(direction="minimize")
+        study_g = optuna.create_study(
+            direction="minimize",
+            sampler=optuna.samplers.TPESampler(seed=42)  # reproducibility
+        )
         study_g.optimize(
             make_objective(X_tr_gg, y_tr_gg, tscv_g),
             n_trials=100,
@@ -383,7 +408,7 @@ for grp_name in KEEP_GROUPS:
         print(f"  Best CV RMSE (log scale): {study_g.best_value:.5f}")
         print(f"  Best params: {study_g.best_params}")
 
-        model_g = XGBRegressor(random_state=42, tree_method="hist", device="cuda", **study_g.best_params)
+        model_g = XGBRegressor(random_state=42, tree_method="hist", device=DEVICE, **study_g.best_params)
         model_g.fit(X_tr_gg, y_tr_gg)
         GROUP_MODELS[grp_name] = model_g
     else:
@@ -402,9 +427,22 @@ for grp_name in KEEP_GROUPS:
         confidence_level=alpha_g,
         prefit=True
     )
+    # NOTE — intentional design asymmetry (acknowledged in paper):
+    # find_min_alpha() selected alpha using nonconformity scores from the
+    # first 80% of X_cal_g (cal-fit), validated on the remaining 20%
+    # (cal-holdout).  However, cr_g.conformalize() below computes the
+    # actual prediction-interval threshold from the FULL X_cal_g.
+    # Using more calibration data for the threshold estimate is a
+    # conservative choice: it slightly widens intervals relative to strict
+    # theoretical consistency, but does not inflate coverage claims.
+    # Paper note: "The conformal threshold is computed on the full
+    # calibration set, while the confidence level α was selected on an
+    # 80% sub-split; this is a conservative design that slightly widens
+    # intervals relative to strict theoretical consistency."
     cr_g.conformalize(X_cal_g, y_cal_g)
     conformal_regressors[grp_name] = cr_g
     print(f"  Conformal confidence level (cal-set recalibrated): {alpha_g}")
+
 
 import pickle
 pickle.dump(GROUP_MODELS,  open(MODELS_CACHE,  "wb"))
@@ -511,6 +549,151 @@ tertile_err = results.groupby("price_tertile")["abs_err"].mean().round(2)
 print("\n  Mean MAE by price regime:")
 print(tertile_err.to_string())
 
+# ══════════════════════════════════════════════════════════════
+# COLOUR PALETTE (defined here so Phase 5c SHAP plot can use it)
+# ══════════════════════════════════════════════════════════════
+BG           = "#0f172a"
+PANEL        = "#1e293b"
+ACCENT       = "#38bdf8"
+ORANGE       = "#fb923c"
+GREEN        = "#4ade80"
+RED          = "#f87171"
+MUTED        = "#64748b"
+PURPLE       = "#a78bfa"
+TEXT         = "#e2e8f0"
+GROUP_COLORS = [ACCENT, ORANGE, GREEN, PURPLE]
+
+def style_ax(ax, title, fontsize=11):
+    ax.set_facecolor(PANEL)
+    ax.tick_params(colors=TEXT, labelsize=8)
+    ax.spines[:].set_color(MUTED)
+    ax.set_title(title, color=TEXT, fontsize=fontsize, fontweight="bold", pad=8)
+    ax.xaxis.label.set_color(TEXT)
+    ax.yaxis.label.set_color(TEXT)
+
+
+# ══════════════════════════════════════════════════════════════
+# PHASE 5b — NAIVE PERSISTENCE BASELINE COMPARISON
+# ══════════════════════════════════════════════════════════════
+print("\n── Phase 5b: Naive Persistence Baseline ───────────────────────")
+print("   Naive persistence: predict next month = last month's actual price.")
+
+# Compute naive prediction: within each (region, commodity) series, shift actual
+# price by 1 month. This is the canonical 'no-model' benchmark.
+test_df_sorted = test_df.sort_values(["region", "commodity", "date"])
+naive_pred = test_df_sorted.groupby(["region", "commodity"])["price_php"].shift(1)
+
+# Drop the first observation per series (no prior month available)
+valid_mask  = naive_pred.notna()
+y_naive     = naive_pred[valid_mask].values
+y_true_naive = test_df_sorted.loc[valid_mask, "price_php"].values
+
+naive_rmse = np.sqrt(mean_squared_error(y_true_naive, y_naive))
+naive_mae  = mean_absolute_error(y_true_naive, y_naive)
+
+# ── Overall aligned comparison (same rows as naive) ─────────────
+# test_df was reset_index(drop=True) before y_pred/y_actual were built,
+# so test_df_sorted.index values are valid positional indices into those arrays.
+valid_mask_arr   = valid_mask.values          # boolean, same length as test_df_sorted
+sorted_positions = test_df_sorted.index.values  # integer positions into y_pred / y_actual
+
+xgb_pred_valid   = y_pred[sorted_positions][valid_mask_arr]
+xgb_actual_valid = y_actual[sorted_positions][valid_mask_arr]
+xgb_subset_rmse  = np.sqrt(mean_squared_error(xgb_actual_valid, xgb_pred_valid))
+improvement_pct  = (naive_rmse - xgb_subset_rmse) / naive_rmse * 100
+
+print(f"  Naive persistence RMSE : ₱{naive_rmse:.2f}")
+print(f"  Naive persistence MAE  : ₱{naive_mae:.2f}")
+print(f"  XGBoost RMSE (overall) : ₱{overall_rmse:.2f}")
+print(f"  XGBoost RMSE (matched) : ₱{xgb_subset_rmse:.2f}  (same rows as naive)")
+print(f"  RMSE improvement       : {improvement_pct:.1f}% over naive baseline")
+
+# Per-group naive comparison — both metrics on the EXACT same row subset
+print("\n  Naive vs XGBoost RMSE per commodity group:")
+for grp in KEEP_GROUPS:
+    grp_mask_ts = test_df_sorted["commodity_group"] == grp
+    grp_naive   = naive_pred[grp_mask_ts]
+    grp_actual  = test_df_sorted.loc[grp_mask_ts, "price_php"]
+    grp_valid   = grp_naive.notna()
+    if grp_valid.sum() < 2:
+        continue
+    g_naive_rmse = np.sqrt(mean_squared_error(grp_actual[grp_valid], grp_naive[grp_valid]))
+    # XGBoost on the same valid rows only
+    grp_positions = test_df_sorted[grp_mask_ts].index.values  # positions into y_pred
+    g_xgb_actual  = y_actual[grp_positions][grp_valid.values]
+    g_xgb_pred    = y_pred[grp_positions][grp_valid.values]
+    g_xgb_rmse    = np.sqrt(mean_squared_error(g_xgb_actual, g_xgb_pred))
+    g_imp = (g_naive_rmse - g_xgb_rmse) / g_naive_rmse * 100
+    print(f"    {grp:12s}  Naive: ₱{g_naive_rmse:.2f}  XGBoost: ₱{g_xgb_rmse:.2f}  "
+          f"Improvement: {g_imp:.1f}%")
+
+
+# ══════════════════════════════════════════════════════════════
+# PHASE 5c — SHAP FEATURE IMPORTANCE (all four groups)
+# ══════════════════════════════════════════════════════════════
+print("\n── Phase 5c: SHAP Feature Importance (All Groups) ─────────────")
+if SHAP_AVAILABLE:
+    shap_all = {}  # grp_name -> pd.Series (mean |shap|, indexed by feature)
+
+    for grp_name in KEEP_GROUPS:
+        grp_mask = test_groups_df["commodity_group"] == grp_name
+        X_test_g = X_test[grp_mask.values]
+        if len(X_test_g) == 0:
+            print(f"  WARNING: No {grp_name} rows in test set — skipping SHAP.")
+            continue
+        explainer = shap.TreeExplainer(GROUP_MODELS[grp_name])
+        shap_vals = explainer.shap_values(X_test_g)
+        shap_imp  = pd.Series(
+            np.abs(shap_vals).mean(axis=0), index=feature_cols
+        ).sort_values(ascending=False)
+        shap_all[grp_name] = shap_imp
+
+        print(f"\n  SHAP mean |value| — {grp_name} (top 15):")
+        print(shap_imp.head(15).round(5).to_string())
+
+        csv_name = f"shap_importance_{grp_name.lower()}_v4.csv"
+        shap_imp.reset_index().rename(
+            columns={"index": "feature", 0: "shap_mean_abs"}
+        ).to_csv(OUTPUTS_DIR / csv_name, index=False)
+        print(f"  SHAP CSV saved → {csv_name}")
+
+    # ── Combined 2×2 SHAP dashboard ───────────────────────────────
+    if shap_all:
+        fig_shap, axes_shap = plt.subplots(2, 2, figsize=(18, 14))
+        fig_shap.patch.set_facecolor(BG)
+        fig_shap.suptitle(
+            "SHAP Mean |Value| — All Commodity Groups (Top 15 Features)",
+            color=TEXT, fontsize=14, fontweight="bold", y=1.01
+        )
+        for ax_s, (grp_name, shap_imp) in zip(axes_shap.flatten(), shap_all.items()):
+            ax_s.set_facecolor(PANEL)
+            shap_top = shap_imp.head(15)
+            bar_col_s = [
+                ACCENT if i < 3 else (PURPLE if i < 8 else MUTED)
+                for i in range(len(shap_top))
+            ]
+            ax_s.barh(shap_top.index[::-1], shap_top.values[::-1],
+                      color=bar_col_s[::-1], height=0.65)
+            ax_s.tick_params(colors=TEXT, labelsize=7)
+            ax_s.spines[:].set_color(MUTED)
+            ax_s.set_title(f"{grp_name} — SHAP Mean |Value|",
+                           color=TEXT, fontsize=11, fontweight="bold", pad=8)
+            ax_s.set_xlabel("Mean |SHAP Value| (log-price scale)",
+                            color=TEXT, fontsize=8)
+            ax_s.yaxis.label.set_color(TEXT)
+            for i, val in enumerate(shap_top.values[::-1]):
+                ax_s.text(val + 0.0003, i, f"{val:.4f}", va="center",
+                          color=TEXT, fontsize=6.5)
+        for ax_s in axes_shap.flatten()[len(shap_all):]:
+            ax_s.set_visible(False)
+        plt.tight_layout()
+        plt.savefig(OUTPUTS_DIR / "shap_all_groups_v4.png", dpi=140,
+                    bbox_inches="tight", facecolor=BG)
+        print("\n  SHAP combined plot saved → shap_all_groups_v4.png")
+        plt.close(fig_shap)
+else:
+    print("  SHAP not available. Install with: pip install shap")
+
 
 
 # ══════════════════════════════════════════════════════════════
@@ -584,24 +767,7 @@ print(reg_unseen.sort_values("RMSE").to_string())
 # VISUALISATIONS
 # ══════════════════════════════════════════════════════════════
 
-BG           = "#0f172a"
-PANEL        = "#1e293b"
-ACCENT       = "#38bdf8"
-ORANGE       = "#fb923c"
-GREEN        = "#4ade80"
-RED          = "#f87171"
-MUTED        = "#64748b"
-PURPLE       = "#a78bfa"
-TEXT         = "#e2e8f0"
-GROUP_COLORS = [ACCENT, ORANGE, GREEN, PURPLE]
 
-def style_ax(ax, title, fontsize=11):
-    ax.set_facecolor(PANEL)
-    ax.tick_params(colors=TEXT, labelsize=8)
-    ax.spines[:].set_color(MUTED)
-    ax.set_title(title, color=TEXT, fontsize=fontsize, fontweight="bold", pad=8)
-    ax.xaxis.label.set_color(TEXT)
-    ax.yaxis.label.set_color(TEXT)
 
 
 # ════════════════════════════════════════════════════════════
