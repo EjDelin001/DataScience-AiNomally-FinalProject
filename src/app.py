@@ -36,18 +36,8 @@ except FileNotFoundError:
 # Load per-group confidence levels if available
 @st.cache_data
 def load_group_confidence():
-    """Returns dict mapping commodity_group -> confidence level string, e.g. 'Rice' -> '95%'."""
-    cg_path = OUTPUTS_DIR / "evaluation_by_commodity_group_v4.csv"
-    defaults = {"Fish": "91%", "Rice": "95%", "Meat": "92%", "Vegetables": "91%"}
-
-    if not cg_path.exists():
-        return defaults
-    cg_df = pd.read_csv(cg_path)
-    # Coverage column is already a percentage (e.g. 95.3); round to nearest whole
-    if "Coverage" in cg_df.columns and "commodity_group" in cg_df.columns:
-        def load_group_confidence():
+    """Returns dict mapping commodity_group -> conformal confidence level string."""
     return {"Fish": "91%", "Rice": "95%", "Meat": "92%", "Vegetables": "91%"}
-    return defaults
 
 group_confidence = load_group_confidence()
 
