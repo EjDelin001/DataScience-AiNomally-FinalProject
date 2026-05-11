@@ -10,6 +10,10 @@ Architecture:
 4. Outputs final `panel_food_prices_ph_clean.csv`.
 """
 
+# ══════════════════════════════════════════════════════════════
+# SECTION 1: Rodriguez, Chaze
+# ══════════════════════════════════════════════════════════════
+
 import pandas as pd
 import numpy as np
 from pathlib import Path
@@ -83,6 +87,9 @@ before = len(df)
 df = df[~df["commodity"].isin(DROP_COMMODITIES)].copy()
 print(f"After dropping bad/duplicate commodities: {len(df):,} rows  (dropped {before - len(df):,})")
 
+# ══════════════════════════════════════════════════════════════
+# SECTION 2: Pascua, Ian Juvel
+# ══════════════════════════════════════════════════════════════
 # ── 5. windowed completeness filter ─────────────────────────────────────────
 #
 #   WHY WINDOWED:
