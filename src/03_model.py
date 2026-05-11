@@ -12,6 +12,10 @@ Architecture:
 5. Evaluation: Generates RMSE, MAE, coverage metrics, and visual dashboard artifacts.
 """
 
+# ══════════════════════════════════════════════════════════════
+# SECTION 1: Angcaway, Andrew
+# ══════════════════════════════════════════════════════════════
+
 import warnings
 warnings.filterwarnings("ignore")
 
@@ -106,7 +110,10 @@ CONFORMAL_GROUPS = {
     "Meat":       lambda r: (r["commodity_group"] == "Meat"),
 }
 
-# Fix 2: coastal regions (significant Fish price CV ~0.55–0.65)
+# ══════════════════════════════════════════════════════════════
+# SECTION 2: Delin, Earold Jan
+# ══════════════════════════════════════════════════════════════
+109: # Fix 2: coastal regions (significant Fish price CV ~0.55–0.65)
 COASTAL_REGIONS = {
     "Region III", "Region IV-A", "Region IV-B",
     "Region VII", "Region VIII", "Region IX", "Region XI", "Region XII"
@@ -213,7 +220,10 @@ df["oni_x_month_cos"] = df["oni"] * df["month_cos"]
 
 enso_dummy_cols = [c for c in df.columns if c.startswith("enso_phase_")]
 
-feature_cols = [
+# ══════════════════════════════════════════════════════════════
+# SECTION 3: Ebeng, Ravone
+# ══════════════════════════════════════════════════════════════
+216: feature_cols = [
     # Price history
     "price_lag_1", "price_lag_2", "price_lag_3", "price_lag_6", "price_lag_12",
     "price_yoy", "price_vol3", "price_trend6",
@@ -332,7 +342,10 @@ unseen_groups_df = unseen_df.reset_index(drop=True)
 
 
 # ══════════════════════════════════════════════════════════════
-# PHASE 3 — PER-GROUP OPTUNA + XGBoost + CONFORMAL
+# ══════════════════════════════════════════════════════════════
+# SECTION 4: Pascua, Ian Juvel
+# ══════════════════════════════════════════════════════════════
+336: # PHASE 3 — PER-GROUP OPTUNA + XGBoost + CONFORMAL
 # ══════════════════════════════════════════════════════════════
 print("\n── Phase 3: Per-Group Optuna + XGBoost + Conformal (100 trials each) ──")
 
@@ -451,7 +464,10 @@ print(f"\n  Cached models → {MODELS_CACHE}  |  studies → {STUDIES_CACHE}")
 
 
 # ══════════════════════════════════════════════════════════════
-# PHASE 4 — GENERATE PREDICTIONS (test set)
+# ══════════════════════════════════════════════════════════════
+# SECTION 5: Rodriguez, Chaze
+# ══════════════════════════════════════════════════════════════
+455: # PHASE 4 — GENERATE PREDICTIONS (test set)
 # ══════════════════════════════════════════════════════════════
 print("\n── Phase 4: Generating Predictions (Test Set) ────────────────")
 
@@ -573,7 +589,10 @@ def style_ax(ax, title, fontsize=11):
 
 
 # ══════════════════════════════════════════════════════════════
-# PHASE 5b — NAIVE PERSISTENCE BASELINE COMPARISON
+# ══════════════════════════════════════════════════════════════
+# SECTION 6: Santos, Jerome II Radcliffe
+# ══════════════════════════════════════════════════════════════
+577: # PHASE 5b — NAIVE PERSISTENCE BASELINE COMPARISON
 # ══════════════════════════════════════════════════════════════
 print("\n── Phase 5b: Naive Persistence Baseline ───────────────────────")
 print("   Naive persistence: predict next month = last month's actual price.")
@@ -697,7 +716,10 @@ else:
 
 
 # ══════════════════════════════════════════════════════════════
-# PHASE 6 — UNSEEN DATA EVALUATION (true out-of-sample)
+# ══════════════════════════════════════════════════════════════
+# SECTION 7: Sibayan, Erick James
+# ══════════════════════════════════════════════════════════════
+702: # PHASE 6 — UNSEEN DATA EVALUATION (true out-of-sample)
 # ══════════════════════════════════════════════════════════════
 print("\n── Phase 6: Unseen Data Evaluation (True Out-of-Sample) ──────")
 
