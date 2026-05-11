@@ -113,7 +113,7 @@ CONFORMAL_GROUPS = {
 # ══════════════════════════════════════════════════════════════
 # SECTION 2: Delin, Earold Jan
 # ══════════════════════════════════════════════════════════════
-109: # Fix 2: coastal regions (significant Fish price CV ~0.55–0.65)
+# Fix 2: coastal regions (significant Fish price CV ~0.55–0.65)
 COASTAL_REGIONS = {
     "Region III", "Region IV-A", "Region IV-B",
     "Region VII", "Region VIII", "Region IX", "Region XI", "Region XII"
@@ -223,7 +223,7 @@ enso_dummy_cols = [c for c in df.columns if c.startswith("enso_phase_")]
 # ══════════════════════════════════════════════════════════════
 # SECTION 3: Ebeng, Ravone
 # ══════════════════════════════════════════════════════════════
-216: feature_cols = [
+feature_cols = [
     # Price history
     "price_lag_1", "price_lag_2", "price_lag_3", "price_lag_6", "price_lag_12",
     "price_yoy", "price_vol3", "price_trend6",
@@ -341,11 +341,7 @@ y_unseen        = unseen_df["log_price"].values
 unseen_groups_df = unseen_df.reset_index(drop=True)
 
 
-# ══════════════════════════════════════════════════════════════
-# ══════════════════════════════════════════════════════════════
-# SECTION 4: Pascua, Ian Juvel
-# ══════════════════════════════════════════════════════════════
-336: # PHASE 3 — PER-GROUP OPTUNA + XGBoost + CONFORMAL
+# PHASE 3 — PER-GROUP OPTUNA + XGBoost + CONFORMAL
 # ══════════════════════════════════════════════════════════════
 print("\n── Phase 3: Per-Group Optuna + XGBoost + Conformal (100 trials each) ──")
 
@@ -463,11 +459,7 @@ pickle.dump(group_studies, open(STUDIES_CACHE, "wb"))
 print(f"\n  Cached models → {MODELS_CACHE}  |  studies → {STUDIES_CACHE}")
 
 
-# ══════════════════════════════════════════════════════════════
-# ══════════════════════════════════════════════════════════════
-# SECTION 5: Rodriguez, Chaze
-# ══════════════════════════════════════════════════════════════
-455: # PHASE 4 — GENERATE PREDICTIONS (test set)
+# PHASE 4 — GENERATE PREDICTIONS (test set)
 # ══════════════════════════════════════════════════════════════
 print("\n── Phase 4: Generating Predictions (Test Set) ────────────────")
 
@@ -588,11 +580,7 @@ def style_ax(ax, title, fontsize=11):
     ax.yaxis.label.set_color(TEXT)
 
 
-# ══════════════════════════════════════════════════════════════
-# ══════════════════════════════════════════════════════════════
-# SECTION 6: Santos, Jerome II Radcliffe
-# ══════════════════════════════════════════════════════════════
-577: # PHASE 5b — NAIVE PERSISTENCE BASELINE COMPARISON
+# PHASE 5b — NAIVE PERSISTENCE BASELINE COMPARISON
 # ══════════════════════════════════════════════════════════════
 print("\n── Phase 5b: Naive Persistence Baseline ───────────────────────")
 print("   Naive persistence: predict next month = last month's actual price.")
@@ -715,11 +703,7 @@ else:
 
 
 
-# ══════════════════════════════════════════════════════════════
-# ══════════════════════════════════════════════════════════════
-# SECTION 7: Sibayan, Erick James
-# ══════════════════════════════════════════════════════════════
-702: # PHASE 6 — UNSEEN DATA EVALUATION (true out-of-sample)
+# PHASE 6 — UNSEEN DATA EVALUATION (true out-of-sample)
 # ══════════════════════════════════════════════════════════════
 print("\n── Phase 6: Unseen Data Evaluation (True Out-of-Sample) ──────")
 
