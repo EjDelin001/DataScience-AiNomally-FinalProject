@@ -2,10 +2,5 @@
 __pycache__/
 .idea/
 
-# Ignore all data directories (raw, interim, and processed CSVs) to prevent repository bloat
-data/raw/
-data/interim/
-data/processed/
-
 # Model cache files are large
 *.pkl
