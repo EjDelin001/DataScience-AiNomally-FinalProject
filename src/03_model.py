@@ -13,7 +13,7 @@ Architecture:
 """
 
 # ══════════════════════════════════════════════════════════════
-# SECTION 1: Angcaway, Andrew
+# SECTION 1: Ebeng, Ravone
 # ══════════════════════════════════════════════════════════════
 
 import warnings
@@ -221,7 +221,7 @@ df["oni_x_month_cos"] = df["oni"] * df["month_cos"]
 enso_dummy_cols = [c for c in df.columns if c.startswith("enso_phase_")]
 
 # ══════════════════════════════════════════════════════════════
-# SECTION 3: Ebeng, Ravone
+# SECTION 3: Angcaway, Andrew
 # ══════════════════════════════════════════════════════════════
 feature_cols = [
     # Price history
@@ -341,6 +341,9 @@ y_unseen        = unseen_df["log_price"].values
 unseen_groups_df = unseen_df.reset_index(drop=True)
 
 
+# ══════════════════════════════════════════════════════════════
+# SECTION 4: Pascua, Ian Juvel
+# ══════════════════════════════════════════════════════════════
 # PHASE 3 — PER-GROUP OPTUNA + XGBoost + CONFORMAL
 # ══════════════════════════════════════════════════════════════
 print("\n── Phase 3: Per-Group Optuna + XGBoost + Conformal (100 trials each) ──")
@@ -459,6 +462,9 @@ pickle.dump(group_studies, open(STUDIES_CACHE, "wb"))
 print(f"\n  Cached models → {MODELS_CACHE}  |  studies → {STUDIES_CACHE}")
 
 
+# ══════════════════════════════════════════════════════════════
+# SECTION 5: Rodriguez, Chaze
+# ══════════════════════════════════════════════════════════════
 # PHASE 4 — GENERATE PREDICTIONS (test set)
 # ══════════════════════════════════════════════════════════════
 print("\n── Phase 4: Generating Predictions (Test Set) ────────────────")
@@ -580,6 +586,9 @@ def style_ax(ax, title, fontsize=11):
     ax.yaxis.label.set_color(TEXT)
 
 
+# ══════════════════════════════════════════════════════════════
+# SECTION 6:Sibayan, Erick James
+# ══════════════════════════════════════════════════════════════
 # PHASE 5b — NAIVE PERSISTENCE BASELINE COMPARISON
 # ══════════════════════════════════════════════════════════════
 print("\n── Phase 5b: Naive Persistence Baseline ───────────────────────")
@@ -703,6 +712,9 @@ else:
 
 
 
+# ══════════════════════════════════════════════════════════════
+# SECTION 7: Santos, Jerome II Radcliffe
+# ══════════════════════════════════════════════════════════════
 # PHASE 6 — UNSEEN DATA EVALUATION (true out-of-sample)
 # ══════════════════════════════════════════════════════════════
 print("\n── Phase 6: Unseen Data Evaluation (True Out-of-Sample) ──────")
