@@ -5,7 +5,7 @@ using WFP market data and ENSO climate indicators (ONI index).
 
 ## 🚀 The Pipeline
 
-Our methodology strictly avoids data leakage and ensures robust, real-world reliability through a 4-step architecture:
+Our methodology strictly avoids data leakage and ensures robust, real-world reliability through a 5-step architecture:
 
 1. **`src/01_pipeline.py` (Data Engineering)** 
    Merges historical WFP food price data with ONI climate metrics. Captures specific supply-side disruptions such as regional fishing bans and the Philippine typhoon season.
@@ -13,8 +13,10 @@ Our methodology strictly avoids data leakage and ensures robust, real-world reli
    Categorizes commodities into primary agricultural groups and filters out statistically sparse time-series using a strict 50% windowed completeness threshold from 2010 onwards.
 3. **`src/03_model.py` (Model Training & Conformal Calibration)** 
    Trains independent **XGBoost Regressors** optimized via 100 Optuna trials per commodity group. It then applies **Split Conformal Prediction (MAPIE)** to empirically calibrate uncertainty and generate dynamic 90% confidence intervals.
-4. **`src/app.py` (Interactive Prototype)**
-   An interactive web dashboard built with **Streamlit** and **Plotly** that allows stakeholders to visually explore the out-of-sample and unseen predictions on a per-region, per-commodity basis.
+4. **`src/04_forecast.py` (Long-Range Forecast Engine)**
+   A batch script that generates recursive autoregressive forecasts out to 2050 across simulated climate scenarios (El Niño, La Niña, Neutral) using synthetic ONI cycles.
+5. **`src/app.py` (Interactive Prototype)**
+   An interactive web dashboard built with **Streamlit** and **Plotly** that allows stakeholders to visually explore historical predictions and interactive 2050 climate scenarios on a per-region, per-commodity basis.
 
 ## 📂 Project Structure
 
@@ -30,6 +32,9 @@ Our methodology strictly avoids data leakage and ensures robust, real-world reli
 │   ├── 01_pipeline.py
 │   ├── 02_clean.py
 │   ├── 03_model.py
+│   ├── 04_forecast.py       ← 2050 Recursive Forecasting Engine
+│   ├── forecast_engine.py   ← Core forecasting logic and feature builder
+│   ├── oni_generator.py     ← Synthetic Oceanic Nino Index generator
 │   └── app.py               ← Streamlit Prototype Application
 ├── README.md
 └── .gitignore
@@ -87,9 +92,13 @@ To launch the interactive system walkthrough for the final presentation:
 # - data/group_studies_v4.pkl
 
 # 2. Ensure you have the required libraries
-pip install streamlit plotly
+pip install streamlit plotly xgboost scikit-learn mapie pandas numpy
 
-# 3. Launch the application
+# 3. Generate the 2050 Forecasts
+# Run this once to generate the long-range forecast data across different scenarios
+python src/04_forecast.py
+
+# 4. Launch the application
 python -m streamlit run src/app.py
 ```
 
